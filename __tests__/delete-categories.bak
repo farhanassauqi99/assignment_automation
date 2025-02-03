@@ -1,0 +1,71 @@
+const axios = require('axios');
+const apiCollection = require('../collections/categories');  // Mengambil collection API yang sudah dibuat
+const positiveScenarios = require('../test-data/delete-categories/P, delete categories');  // Skenario Positif
+const negativeScenarios = require('../test-data/delete-categories/N, delete categories');  // Skenario Negatif
+
+describe('DELETE /categories/{categoryId}', () => {
+    let categoryId;
+    let validToken;
+
+    beforeAll(async () => {
+        const getManyResp = await axios.get(`https://api.practicesoftwaretesting.com/categories`);
+
+        // Pastikan respons tidak kosong
+        if (!getManyResp.data || getManyResp.data.length === 0) {
+            throw new Error("Tidak ada kategori yang tersedia untuk diuji.");
+        }
+
+        let category = getManyResp.data[1]; // Ambil kategori ke-2 untuk diperbarui
+        categoryId = category?.id; // Pastikan ID ada
+
+        // Pastikan categoryId valid sebelum lanjut
+        if (!categoryId) {
+            throw new Error("categoryId tidak ditemukan! Pastikan ada kategori sebelum mengupdate.");
+        }
+        // Login untuk mendapatkan token admin yg dibutuhkan untuk method delete
+        const getResp = await axios.post('https://api.practicesoftwaretesting.com/users/login',{'email':'admin@practicesoftwaretesting.com','password':'welcome01'});
+
+        validToken = getResp.data.access_token;  // Ambil ID kategori dari hasil response
+    });
+
+    // Uji skenario positif
+    positiveScenarios.forEach((scenario) => {
+        test(`[Success] ${scenario.name}`, async () => {
+            console.log(validToken)
+            const response = await axios.delete(
+                apiCollection[4].request.url.replace('{categoryId}', categoryId), // Menggunakan URL dari DELETE request
+                { 
+                    headers: { 
+                        'Authorization':`Bearer ${validToken}`,
+                    } 
+                }
+            );
+
+            console.log("Response Data:", JSON.stringify(response.data, null, 2));
+
+            // Memastikan status dan response sesuai dengan ekspektasi skenario positif
+            expect(response.status).toBe(scenario.expectedStatusCode);
+            expect(response.data).toMatchObject(scenario.expectedResponse);
+        });
+    });
+
+    // Uji skenario negatif
+    negativeScenarios.forEach((scenario) => {
+        test(`[Failed] ${scenario.name}`, async () => {
+            const invalidCategoryId = scenario.request.invalidCategoryId || categoryId;
+
+            try {
+                await axios.delete(
+                    apiCollection[4].request.url.replace('{categoryId}', invalidCategoryId),  // Menggunakan URL dari DELETE request
+                    { headers: { 'Content-Type': 'application/json' } }
+                );
+            } catch (error) {
+                console.log("Error Response:", JSON.stringify(error.response.data, null, 2));
+
+                // Memastikan error status dan response sesuai dengan ekspektasi skenario negatif
+                expect(error.response.status).toBe(scenario.expectedStatusCode);
+                expect(error.response.data).toMatchObject(scenario.expectedResponse);
+            }
+        });
+    });
+});
