@@ -13,7 +13,8 @@
 //     expect(response.data).toHaveProperty('message', "");
 // })
 const axios = require('axios');
-
+const positiveScenarios = require('../test-data/put-categories/P, put categories');
+const negativeScenarios = require('../test-data/put-categories/N, put categories');
 test('Update Category By ID - Success', async () => {
     // Ambil daftar kategori terlebih dahulu
     const getManyResp = await axios.get(`https://api.practicesoftwaretesting.com/categories`);
