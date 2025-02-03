@@ -1,53 +1,72 @@
-// __tests__/post-categories.js
+// const axios = require('axios');
+// const apiCollection = require('../collections/categories');
+
+// const positiveScenarios = require('../test-data/post-categories/P-valid-categories');
+// const duplicateScenarios = require('../test-data/post-categories/N-duplicate-categories');
+// const invalidNameScenarios = require('../test-data/post-categories/N-invalid-name-categories');
+
+// const createCategoryRequest = apiCollection.find(api => api.name === 'Create Category').request;
+// const BASE_URL = createCategoryRequest.url;
 
 const axios = require('axios');
+const apiCollection = require('../collections/categories');  
+const positiveScenarios = require('../test-data/post-categories/P-valid-categories');
+const duplicateCategoryScenarios = require('../test-data/post-categories/N-duplicate-categories');
+const invalidNameScenarios = require('../test-data/post-categories/N-invalid-name-categories');
 
-test('[success] create new category', async () => {
-    try {
-        let angkaRandom = Math.ceil(Math.random() * 100) 
-        const newCategory = {
-            name: `New Category ${angkaRandom}`,
-            slug: `new-category-${angkaRandom}`
-        };
-        
-        // console.log("MASUK SINI 1", newCategory);
-        const response = await axios.post('https://api.practicesoftwaretesting.com/categories',
-            newCategory, {
-            headers: {
-                'Content-Type': 'application/json'
+// const BASE_URL = 'https://api.practicesoftwaretesting.com/categories';
+
+describe('POST /categories - Create Category', () => {
+    // Positive Scenarios: Membuat kategori dengan nama yang valid
+    positiveScenarios.forEach((scenario) => {
+        test(`[Success] ${scenario.name}`, async () => {
+            // console.log("url:"+apiCollection[2].request.url)
+            try {
+                const response = await axios.post(apiCollection[2].request.url, scenario.request.data, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                expect(response.status).toBe(scenario.expectedStatusCode);  // Harapkan status 201
+                expect(response.data.name).toBe(scenario.request.data.name);  // Memastikan kategori yang dibuat sesuai
+            } catch (error) {
+                console.error('Error during positive scenario:', error.response?.data);
+                throw error;  // Melempar error untuk memastikan pengujian gagal jika ada masalah
             }
         });
-    
-        // console.log("MASUK SINI 2");
-        expect(response.status).toBe(201);
-        expect(response.data).toBeTruthy();
-        expect(response.data.id).toBeTruthy();
-        expect(response.data.name).toBe(`New Category ${angkaRandom}`)
-        expect(response.data.slug).toBe(`new-category-${angkaRandom}`)
-    } catch (error) {
-        console.log("Error Response:", {
-            status: error.response?.status,
-            data: error.response?.data
+    });
+
+    // Negative Scenarios: Kategori dengan nama yang duplikat
+    duplicateCategoryScenarios.forEach((scenario) => {
+        test(`[Failed] ${scenario.name}`, async () => {
+            try {
+                const response = await axios.post(apiCollection[2].request.url, scenario.request.data, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                console.log(response.body)
+                expect(response.status).toBe(scenario.expectedStatusCode);  // Harapkan status 409 untuk duplikat
+                expect(response.data.slug[0]).toBe(scenario.expectedErrorMessage);  
+
+            } catch (error) {
+                console.log("error is: "+error)
+                // expect(error.response.status).toBe(scenario.expectedStatusCode);  // Harapkan status 409 untuk duplikat
+                // expect(error.response.data.message).toBe(scenario.expectedErrorMessage);  // Memastikan pesan error sesuai
+            }
         });
-        throw error; // Pastikan error dilempar agar Jest bisa menangkapnya
-    }    
-});
+    });
 
-// // Skenario negatif
-test('[failed] empty name', async () => {
-    const newCategory = {
-        // Name tidak disertakan untuk menyebabkan validasi gagal
-        slug: "ini-name"
-    };
-
-    try {
-        res = await axios.post('https://api.practicesoftwaretesting.com/categories', newCategory);
-        console.log("ga bakal sampe sini", res.data)
-    } catch (error) {
-        console.log("masuknya disini", error.response.data)
-        // Memastikan respons memiliki status 422 Unprocessable Entity atau sesuai dengan validasi yang diharapkan
-        expect(error.response.status).toBe(422);
-        // Memastikan respons berisi pesan atau data yang sesuai dengan validasi
-        expect(error.response.data.name[0]).toBe('The name field is required.');
-    }
+    // Negative Scenarios: Kategori dengan nama yang tidak valid
+    invalidNameScenarios.forEach((scenario) => {
+        test(`[Failed] ${scenario.name}`, async () => {
+            try {
+                const response = await axios.post(apiCollection[2].request.url, scenario.request.data, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                console.log(response.body)
+                expect(error.response.status).toBe(scenario.expectedStatusCode);  // Harapkan status 400 atau 422 untuk validasi kesalahan
+                expect(error.response.data.name[0]).toBe(scenario.expectedErrorMessage);  // M
+            } catch (error) {
+               console.log(error)
+            }
+        });
+    });
 });

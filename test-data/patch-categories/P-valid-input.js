@@ -1,5 +1,3 @@
-// test-data/positive-scenario.js
-
 const positiveScenarios = [
     {
         "name": "Update category name successfully",
@@ -10,10 +8,9 @@ const positiveScenarios = [
         },
         "expectedStatusCode": 200,
         "expectedResponse": {
-            "success": true
+            "success": true 
         }
     }
-    
 ];
 
 module.exports = positiveScenarios;
